@@ -11,18 +11,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model users {
   user_id     Int           @id @default(autoincrement())
-  username    String?
+  uuid        String        @unique(map: "uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username    String        @unique @db.VarChar(255)
   phone       String?
   address     String?
+  password    String        @db.VarChar(255) 
   role        role          @default(user)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  UserProduct UserProduct[]
+  UserProduct userproduct[]
 }
 
-model Product {
+model product {
   product_id      Int               @id @default(autoincrement())
   name            String?
   price           Int?
@@ -30,44 +32,44 @@ model Product {
   desc            String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  ProductCategory ProductCategory[]
-  Media           Media[]
-  UserProduct     UserProduct[]
+  ProductCategory productcategory[]
+  Media           media[]
+  UserProduct     userproduct[]
 }
 
-model Category {
+model category {
   category_id     Int               @id @default(autoincrement())
   name            String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  ProductCategory ProductCategory[]
+  ProductCategory productcategory[]
 }
 
-model Media {
+model media {
   id        Int      @id @default(autoincrement())
   name      String?
   url       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  product   Product? @relation(fields: [productId], references: [product_id])
+  product   product? @relation(fields: [productId], references: [product_id])
   productId Int?
 }
 
-model ProductCategory {
+model productcategory {
   id         Int      @id @default(autoincrement())
-  product    Product  @relation(fields: [productId], references: [product_id])
+  product    product  @relation(fields: [productId], references: [product_id])
   productId  Int
-  category   Category @relation(fields: [categoryId], references: [category_id])
+  category   category @relation(fields: [categoryId], references: [category_id])
   categoryId Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
-model UserProduct {
+model userproduct {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [user_id])
+  user      users    @relation(fields: [userId], references: [user_id])
   userId    Int
-  product   Product  @relation(fields: [productId], references: [product_id])
+  product   product  @relation(fields: [productId], references: [product_id])
   productId Int
   quantity  Int
   createdAt DateTime @default(now())
