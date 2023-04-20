@@ -46,4 +46,4 @@ RUN npm run prisma generate
 
 RUN npm run build
 
-CMD ["npm", "run", "migrate:start"]
+CMD ["npm", "run", "migrate:seed:start", "migrate:start"]

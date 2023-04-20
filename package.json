@@ -9,7 +9,8 @@
     "prisma": "prisma",
     "build": "tsc",
     "migrate:start": "prisma migrate deploy && npm run start",
-    "dev": "nodemon ./src/app.ts"
+    "dev": "nodemon ./src/app.ts",
+    "migrate:seed:start": "prisma migrate deploy && prisma db seed && npm run start"
   },
   "repository": {
     "type": "git",
