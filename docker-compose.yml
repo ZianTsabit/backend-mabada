@@ -1,0 +1,33 @@
+version: '3.8'
+
+services: 
+  node_db: 
+    container_name: mabada_db
+    image: "postgres:12"
+    build: ./db
+    ports:
+      - "5435:5432"
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mabada_rest_db
+    restart: always
+  node_backend:
+    container_name: mabada-backend
+    image: mabada-backend:0.0.1
+    build: 
+      context: .
+      args:
+        - EXTERNAL_PORT=${EXTERNAL_PORT}
+        - PORT=${PORT}
+        - PGDATABASE=${PGDATABASE}
+        - PGUSER=${PGDATABASE}
+        - PGPASSWORD=${PGPASSWORD}
+        - PGHOST=${PGHOST}
+        - DATABASE_URL=${DATABASE_URL}
+        - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+    ports:
+      - ${EXTERNAL_PORT}:${PORT}
+    depends_on: 
+      - node_db
+    restart: always

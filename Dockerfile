@@ -1,0 +1,49 @@
+FROM node:19-alpine
+
+ARG PORT
+
+ARG PGDATABASE
+
+ARG PGUSER
+
+ARG PGPASSWORD
+
+ARG PGHOST
+
+ARG DATABASE_URL
+
+ARG ACCESS_TOKEN_SECRET
+
+ENV PORT $PORT
+
+ENV PGDATABASE $PGDATABASE
+
+ENV PGUSER $PGUSER
+
+ENV PGPASSWORD $PGPASSWORD
+
+ENV PGHOST $PGHOST
+
+ENV DATABASE_URL $DATABASE_URL
+
+ENV ACCESS_TOKEN_SECRET $ACCESS_TOKEN_SECRET
+
+EXPOSE $PORT
+
+WORKDIR /src
+
+RUN npm install i npm@latest -g 
+
+COPY package.json package-lock*.json ./
+
+COPY prisma ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run prisma generate
+
+RUN npm run build
+
+CMD ["npm", "run", "migrate:start"]
