@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -12,11 +12,64 @@ datasource db {
 }
 
 model User {
-  id        Int      @default(autoincrement()) @id
-  username  String?
-  phone     String?
-  address   String?
-  role      role     @default(user)
+  user_id     Int           @id @default(autoincrement())
+  username    String?
+  phone       String?
+  address     String?
+  role        role          @default(user)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  UserProduct UserProduct[]
+}
+
+model Product {
+  product_id      Int               @id @default(autoincrement())
+  name            String?
+  price           Int?
+  quantity        Int?
+  desc            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  ProductCategory ProductCategory[]
+  Media           Media[]
+  UserProduct     UserProduct[]
+}
+
+model Category {
+  category_id     Int               @id @default(autoincrement())
+  name            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  ProductCategory ProductCategory[]
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  url       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product? @relation(fields: [productId], references: [product_id])
+  productId Int?
+}
+
+model ProductCategory {
+  id         Int      @id @default(autoincrement())
+  product    Product  @relation(fields: [productId], references: [product_id])
+  productId  Int
+  category   Category @relation(fields: [categoryId], references: [category_id])
+  categoryId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model UserProduct {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [user_id])
+  userId    Int
+  product   Product  @relation(fields: [productId], references: [product_id])
+  productId Int
+  quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
