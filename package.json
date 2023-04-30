@@ -8,9 +8,8 @@
     "start": "node ./dist/app.js",
     "prisma": "prisma",
     "build": "tsc",
-    "migrate:start": "prisma migrate deploy && npm run start",
-    "dev": "nodemon ./src/app.ts",
-    "migrate:seed:start": "prisma migrate deploy && prisma db seed && npm run start"
+    "migrate:start": "prisma migrate dev && npm run start",
+    "dev": "nodemon ./src/app.ts"
   },
   "repository": {
     "type": "git",
@@ -38,5 +37,8 @@
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.0"
+  },
+  "prisma":{
+    "seed": "ts-node prisma/seed.ts"
   }
 }

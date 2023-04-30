@@ -36,5 +36,3 @@ async function seed_admin() {
       }
     })
   }
-  
-  
