@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./dist/app.js",
+    "start": "node ./dist/src/app.js",
     "prisma": "prisma",
     "build": "tsc",
     "migrate:start": "prisma migrate dev && npm run start",
+    "migrate:seed:start": "prisma migrate deploy && prisma db seed && npm run start",
     "dev": "nodemon ./src/app.ts"
   },
   "repository": {

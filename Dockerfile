@@ -36,6 +36,8 @@ RUN npm install i npm@latest -g
 
 COPY package.json package-lock*.json ./
 
+RUN npm install
+
 COPY prisma ./
 
 RUN npm ci
@@ -46,4 +48,4 @@ RUN npm run prisma generate
 
 RUN npm run build
 
-CMD ["npm", "run", "migrate:start"]
+CMD ["npm", "run", "migrate:seed:start"]
