@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 
 const prisma = new PrismaClient();
 
@@ -19,6 +18,22 @@ export const getUsers = async (req: any, res: any) => {
                 role: user.role
             }
         })
+    })
+}
+
+export const getUser = async (req: any, res: any) => {
+    const { uuid } = req.params
+    
+    const user = await prisma.users.findFirst({
+        where: {
+            uuid: uuid
+        }
+    })
+
+    return res.json({
+        status: 200,
+        message: "Sellers fetched successfully",
+        data: user
     })
 }
 

@@ -24,8 +24,10 @@
   },
   "homepage": "https://github.com/ZianTsabit/backend-mabada#readme",
   "devDependencies": {
+    "@faker-js/faker": "^8.0.1",
     "@types/express": "^4.17.1",
     "@types/node": "^18.15.12",
+    "faker": "^5.5.3",
     "nodemon": "^2.0.22",
     "prisma": "^4.13.0",
     "ts-node": "^10.9.1",
@@ -39,7 +41,7 @@
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.0"
   },
-  "prisma":{
+  "prisma": {
     "seed": "ts-node prisma/seed.ts"
   }
 }
