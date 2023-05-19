@@ -17,7 +17,7 @@ export const auth = (admin: boolean = false, user: boolean = false) => {
     if (user) {
         roles.push({ role: role.user })
     }    
-
+    
     return async (req: Request, res: Response, next: NextFunction) => {
         const token = ((req.headers['Authorization'] || req.headers['authorization']) as string)?.replace('Bearer ', '')
         if (token) {
@@ -30,7 +30,6 @@ export const auth = (admin: boolean = false, user: boolean = false) => {
                             OR: roles
                         }
                     });
-
                     if (user) {
                         req.body.token = user;
                         next();
@@ -41,15 +40,13 @@ export const auth = (admin: boolean = false, user: boolean = false) => {
                     }
                     
                 } else {
-                    return res.status(403).json({
-                        message: 'Unauthorized Access'
-                    });
+                    return res.status(403).json({ message: 'invalid token' });
                 }
             });
 
         } else {
             return res.status(403).json({
-                message: 'Unauthorized Access'
+                message: 'invalid_access'
             });
         }    
     }

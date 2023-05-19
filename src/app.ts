@@ -3,6 +3,7 @@ import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import userRouter from './routes/user';
 import authRouter from './routes/auth';
+import productRouter from './routes/product';
 
 config();
 
@@ -26,6 +27,8 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 app.use('/users', userRouter);
 
 app.use('/auth', authRouter);
+
+app.use ('/products', productRouter);
 
 const PORT = process.env.PORT || 3000;
 
