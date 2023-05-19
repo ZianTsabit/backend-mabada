@@ -4,6 +4,7 @@ import cors from 'cors';
 import userRouter from './routes/user';
 import authRouter from './routes/auth';
 import productRouter from './routes/products';
+import categoryRouter from './routes/category';
 
 config();
 
@@ -29,6 +30,8 @@ app.use('/users', userRouter);
 app.use('/auth', authRouter);
 
 app.use ('/products', productRouter);
+
+app.use ('/category', categoryRouter);
 
 const PORT = process.env.PORT || 3000;
 
