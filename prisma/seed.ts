@@ -7,6 +7,9 @@ async function main() {
   await seed_admin();
   await seed_product();
   await seed_category();
+  await seed_productCategory();
+  await seed_productuser();
+  await seed_url();
 }
 
 main()
@@ -41,14 +44,14 @@ async function seed_admin() {
 }
 
 async function seed_product() {
-  const products = Array.from({ length: 50 }).map(() => ({
+  const products = Array.from({ length: 5 }).map(() => ({
     name: faker.commerce.productName(),
     price: faker.datatype.number({ min: 1000, max: 100000 }),
     quantity: faker.datatype.number({ min: 1, max: 200 }),
     desc: faker.lorem.sentence(),
   }));
 
-  const createdProducts = await prisma.product.createMany({
+ await prisma.product.createMany({
     data: products,
     skipDuplicates: true,
   });
@@ -65,3 +68,40 @@ async function seed_category() {
   
   console.log(`Seeded ${createdCategories.count} categories.`);
 }
+
+async function seed_productCategory() {
+  
+  const ids = Array.from({length : 5 }).map((_,index)=>({
+    productId : index + 1,
+    categoryId : faker.datatype.number({min : 1, max :4}),
+  }));
+
+  await prisma.productcategory.createMany({
+    data : ids,
+    skipDuplicates : true,
+  });
+};
+
+async function seed_url() {
+  const ids = Array.from({length : 5 }).map((_,index)=>({
+    productId : index + 1,
+    url : faker.random.alpha(),
+  }));
+
+  await prisma.media.createMany({
+    data : ids,
+    skipDuplicates : true,
+  });
+}
+
+async function seed_productuser(){
+  const ids = Array.from({length : 5 }).map((_,index)=>({
+    userId : 1, 
+    productId : faker.datatype.number({min : 1, max :5}),
+  }));
+
+  await prisma.userproduct.createMany({
+    data : ids,
+    skipDuplicates :true,
+  })
+};
