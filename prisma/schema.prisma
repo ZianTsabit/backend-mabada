@@ -47,7 +47,6 @@ model category {
 
 model media {
   id        Int      @id @default(autoincrement())
-  name      String?
   url       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -71,7 +70,6 @@ model userproduct {
   userId    Int
   product   product  @relation(fields: [productId], references: [product_id])
   productId Int
-  quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
