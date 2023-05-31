@@ -39,8 +39,18 @@ async function seed_admin() {
       phone: `087886250948`,
       address: `Cakung, Jakarta Timur`,
       role: `admin`
+    },
+  }),
+  await prisma.users.create({
+    data : {
+      username : 'qowi',
+      password : hashedPassword,
+      phone : `087886250231`,
+      address : 'Bekasi',
+      role : 'user'
     }
   })
+
 }
 
 async function seed_product() {
@@ -76,10 +86,13 @@ async function seed_productCategory() {
     categoryId : faker.datatype.number({min : 1, max :4}),
   }));
 
-  await prisma.productcategory.createMany({
+  const created = await prisma.productcategory.createMany({
     data : ids,
     skipDuplicates : true,
   });
+  console.log(`Seeded ${created.count} product categories.`);
+
+
 };
 
 async function seed_url() {
@@ -88,10 +101,12 @@ async function seed_url() {
     url : faker.random.alpha(),
   }));
 
-  await prisma.media.createMany({
+  const urls = await prisma.media.createMany({
     data : ids,
     skipDuplicates : true,
   });
+  console.log(`Seeded ${urls.count} url.`);
+
 }
 
 async function seed_productuser(){
