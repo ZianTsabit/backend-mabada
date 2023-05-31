@@ -3,7 +3,7 @@ import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import userRouter from './routes/user';
 import authRouter from './routes/auth';
-import productRouter from './routes/products';
+import productRouter from './routes/product';
 import categoryRouter from './routes/category';
 
 config();

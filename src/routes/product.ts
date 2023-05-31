@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProducts, createProduct, editProduct, categories, productcategories, getProductById, deleteProduct } from '../controllers/product';
+import { getProducts, editProduct, categories, productcategories, getProductById, deleteProduct, createProduct, userprod, getMedia, getProductByuser } from '../controllers/product';
 import { auth } from "../middlewares/auth";
 
 export const productRouter = Router();
@@ -8,9 +8,13 @@ productRouter
     .get('/', getProducts)
     .get('/get/:id', getProductById)
     .get('/categories', categories)
+    .get('/media', getMedia)
+    .get('/user', userprod)
+    //admin routes
+    .get('/:uuid/myproduct', getProductByuser)
     .get('/prodcat', productcategories)
-    .post('/add',auth(true), createProduct)
-    .put('/edit/:id', editProduct)
+    .post('/:uuid/create', createProduct) 
+    .put('/:uuid/edit/:id', editProduct)
     .delete('/:id', deleteProduct)
     ;
     
