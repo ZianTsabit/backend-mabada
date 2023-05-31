@@ -23,7 +23,6 @@ export const createMedia = async (req: any, res: any) => {
 
     const newMedia = await prisma.media.create({
         data: {
-            name: name,
             productId: product_id,
             url: `fields/${url}`,
             
@@ -76,7 +75,6 @@ export const updateMedia = async (req: any, res: any) => {
             id: media_id
         },
         data: {
-            name: name,
             productId: product_id,
         }
     })
