@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import { PrismaClient, media } from '@prisma/client';
-import { getProductCategoryId } from './helper';
 import multer from 'multer';
 import faker from 'faker';
+import { getUserId } from './helper';
 
 const prisma = new PrismaClient();
 const upload = multer({ dest: 'images/' });
 const path = require('path');
 const fs = require('fs');
+const { parseAccessToken } = require('./helper');
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -34,11 +35,10 @@ export const getProducts = async (req: Request, res: Response) => {
                 username: true
               }
             }
-          },
+          }
         }
       }
     });
-
 
     res.json({
       status: 200,
@@ -50,7 +50,7 @@ export const getProducts = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 500,
       message: 'Failed to fetch products',
-      data: null,
+      data: null
     });
   }
 };
@@ -115,20 +115,18 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const getProductByuser = async (req: any, res: any) => {
   try {
-    const { uuid } = req.params
+    const uuid = parseAccessToken(req);
+    if(!uuid){
+      return res.status(403).json({
+        message: 'Unauthorized Access'
+    });
+    }
+    const userId = await getUserId(uuid)
 
-    const usergetId = await prisma.users.findFirst(
-      {
-        where: { uuid },
-        //dapat userid????
-        select: {
-          user_id: true
-        }
-      });
 
     const product = await prisma.userproduct.findMany({
       where: {
-        userId: usergetId.user_id
+        userId: userId
       },
       select: {
         id: true,
@@ -190,36 +188,25 @@ export const createProduct = async (req: any, res: any) => {
           data: err.message,
         });
       }
-
-
+      
       const { name, price, quantity, desc, categoryId } = req.body;
-      const { uuid } = req.params;
-
-      const usergetId = await prisma.users.findFirst({
-        where: { uuid },
-        select: {
-          user_id: true
-        }
-      });
-
-      if (!usergetId) {
-        return res.status(404).json({
-          status: 404,
-          message: 'User not found',
-          data: null,
-        });
-      }
+      
+      const uuid = parseAccessToken(req);
+      const userId = await getUserId(uuid);
 
       const url = req.files.map((file: any) => {
-        const fileExtension = path.extname(file.originalname);
-        const randomName = faker.datatype.uuid();
-        const destinationPath = path.join('images', `${randomName}${fileExtension}`);
+        if (file) {
+          const fileExtension = path.extname(file.originalname);
+          const randomName = faker.datatype.uuid();
+          const destinationPath = path.join('images', `${randomName}${fileExtension}`);
 
-        fs.renameSync(file.path, destinationPath);
+          fs.renameSync(file.path, destinationPath);
 
-        // Menghasilkan URL akses ke file yang di-upload
+          // Menghasilkan URL akses ke file yang di-upload
 
-        return destinationPath;
+          return destinationPath;
+        }
+        return null;
       });
 
       const product = await prisma.product.create({
@@ -242,7 +229,7 @@ export const createProduct = async (req: any, res: any) => {
           },
           UserProduct: {
             create: {
-              userId: usergetId.user_id
+              userId
             }
           }
         },
@@ -292,7 +279,6 @@ export const createProduct = async (req: any, res: any) => {
 };
 
 
-
 export const editProduct = async (req: any, res: any) => {
   try {
     // Menggunakan multer untuk mengunggah file-file dalam permintaan
@@ -310,21 +296,18 @@ export const editProduct = async (req: any, res: any) => {
       const { id } = req.params;
       const product_id = Number(id); // Convert id to number
 
-      const uuid = req.params.uuid;
-      console.log(uuid);
-
-      const usergetId = await prisma.users.findFirst({
-        where: { uuid },
-        select: {
-          user_id: true
-        }
+      const uuid = parseAccessToken(req);
+      if(!uuid){
+        return res.status(403).json({
+          message: 'Unauthorized Access'
       });
+      }
+      const userId = await getUserId(uuid)
       const validUser = await prisma.userproduct.findFirst({
         where: {
           productId: product_id,
-          userId: usergetId.user_id
-        },
-      })
+          userId: userId
+      }});
 
       if (!validUser) {
         return res.status(404).json({
@@ -389,7 +372,6 @@ export const editProduct = async (req: any, res: any) => {
 
           return destinationPath;
         }
-
         return null;
       });
       // Menghapus gambar-gambar lama terkait produk yang akan diupdate
@@ -486,8 +468,6 @@ export const editProduct = async (req: any, res: any) => {
     });
   }
 };
-
-
 
 export const categories = async (req: any, res: any) => {
   try {
@@ -593,22 +573,22 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     const oldImageUrls = oldImage.map((media) => media.url);
 
-        oldImageUrls.forEach((url) => {
-          if (url && fs.existsSync(url)) {
-            fs.unlinkSync(url);
-            console.log(`Deleted file: ${url}`);
-          } else if (url) {
-            console.log(`File not found: ${url}. Skipping deletion.`);
-          }
-        });
+    oldImageUrls.forEach((url) => {
+      if (url && fs.existsSync(url)) {
+        fs.unlinkSync(url);
+        console.log(`Deleted file: ${url}`);
+      } else if (url) {
+        console.log(`File not found: ${url}. Skipping deletion.`);
+      }
+    });
 
 
-      // Hapus relasi produk dengan kategori di tabel bridge (ProductCategory)
-      await prisma.productcategory.deleteMany({
-        where: {
-          productId: productId
-        },
-      });
+    // Hapus relasi produk dengan kategori di tabel bridge (ProductCategory)
+    await prisma.productcategory.deleteMany({
+      where: {
+        productId: productId
+      },
+    });
 
     await prisma.media.deleteMany({
       where: { productId: productId }

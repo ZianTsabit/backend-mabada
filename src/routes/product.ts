@@ -11,9 +11,9 @@ productRouter
     .get('/media', getMedia)
     .get('/user', userprod)
     //admin routes
-    .get('/:uuid/myproduct', getProductByuser)
+    .get('/myproduct', getProductByuser)
     .get('/prodcat', productcategories)
-    .post('/:uuid/create', createProduct) 
+    .post('/create', createProduct) 
     .put('/:uuid/edit/:id', editProduct)
     .delete('/:id', deleteProduct)
     ;

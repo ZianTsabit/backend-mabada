@@ -117,6 +117,5 @@ async function seed_productuser(){
 
   await prisma.userproduct.createMany({
     data : ids,
-    skipDuplicates :true,
   })
 };
