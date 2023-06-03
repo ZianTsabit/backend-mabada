@@ -55,127 +55,42 @@ export const getProducts = async (req: Request, res: Response) => {
   }
 };
 
-export const getProductById = async (req: Request, res: Response) => {
-  try {
-    const productId = parseInt(req.params.id);
-
-    const product = await prisma.product.findUnique({
-      where: {
-        product_id: productId
-      },
-      include: {
-        ProductCategory: {
-          select: {
-            category: {
-              select: {
-                name: true
-              }
-            }
-          }
-        },
-        Media: {
-          select: {
-            url: true
-          }
-        },
-        UserProduct: {
-          select: {
-            user: {
-              select: {
-                uuid: true,
-                username: true,
-              }
-            }
-          }
-        }
-      }
-    });
-
-    if (!product) {
-      return res.status(404).json({
-        status: 404,
-        message: 'Product not found',
-        data: null
-      });
-    }
-    res.json({
-      status: 200,
-      message: 'Product fetched successfully',
-      data: product
-    });
-  } catch (error) {
-    console.error('Error getting product:', error);
-    res.status(500).json({
-      status: 500,
-      message: 'Internal Server Error',
-      error: error.message
-    });
-  }
-};
-
 export const getProductByuser = async (req: any, res: any) => {
   try {
     const uuid = parseAccessToken(req);
-    if(!uuid){
-      return res.status(403).json({
-        message: 'Unauthorized Access'
-    });
-    }
-    const userId = await getUserId(uuid)
-
-
-    const product = await prisma.userproduct.findMany({
-      where: {
-        userId: userId
-      },
-      select: {
-        id: true,
-        productId: true,
-        user: {
-          select: {
-            uuid: true,
-            username: true,
-          }
-        },
-        product: {
-          select: {
-            name: true,
-            price: true,
-            quantity: true,
-            desc: true,
-            ProductCategory: {
-              select: {
-                category: {
-                  select: {
-                    name: true,
-                  }
-                }
-              }
-            },
-            Media: {
-              select: {
-                url: true
-              }
-            }
-          }
+      const userId = await getUserId(uuid)
+      if (!userId) {
+        return res.status(403).json({
+          message: 'Unauthorized Access'
+        });
+      }
+  const product = await prisma.userproduct.findMany({
+    where : { userId},
+    select : {
+      product : {
+        select : {
+          uuid : true,
+          name : true,
+          price : true,
+          desc : true,
+          quantity : true,
         }
       }
-    })
-    res.json({
-      status: 200,
-      message: 'Getting Product by user_id',
-      data: product
-    })
-
+    }
+  })
+  res.json({
+    status: 200,
+    message: 'User Products fetched successfully',
+    data: product
+  });
   } catch (error) {
-    console.error('Error updating product:', error);
     res.status(500).json({
       status: 500,
-      message: 'Internal Server Error',
-      error: error.message,
+      message: 'Failed to fetch products',
+      data: null
     });
   }
-}
+};
 
 export const createProduct = async (req: any, res: any) => {
   try {
@@ -188,12 +103,17 @@ export const createProduct = async (req: any, res: any) => {
           data: err.message,
         });
       }
-      
-      const { name, price, quantity, desc, categoryId } = req.body;
-      
-      const uuid = parseAccessToken(req);
-      const userId = await getUserId(uuid);
 
+      const { name, price, quantity, desc, categoryId } = req.body;
+
+      const uuid = parseAccessToken(req);
+      const userId = await getUserId(uuid)
+      if (!userId) {
+        return res.status(403).json({
+          message: 'Unauthorized Access'
+        });
+      }
+      
       const url = req.files.map((file: any) => {
         if (file) {
           const fileExtension = path.extname(file.originalname);
@@ -293,26 +213,30 @@ export const editProduct = async (req: any, res: any) => {
         });
       }
 
-      const { id } = req.params;
-      const product_id = Number(id); // Convert id to number
+      const { uuid } = req.params;
 
-      const uuid = parseAccessToken(req);
-      if(!uuid){
+      const UserUuid = parseAccessToken(req);
+      const userId = await getUserId(UserUuid)
+      if (!userId) {
         return res.status(403).json({
           message: 'Unauthorized Access'
-      });
+        });
       }
-      const userId = await getUserId(uuid)
+      const productId = await prisma.product.findUnique({
+        where : { uuid },
+        select : {
+          product_id : true
+        }
+      })
+      
       const validUser = await prisma.userproduct.findFirst({
-        where: {
-          productId: product_id,
-          userId: userId
-      }});
+        where : {userId : userId,
+          productId : productId.product_id}
+      })
 
-      if (!validUser) {
-        return res.status(404).json({
-          status: 404,
-          message: 'Invalid user',
+      if (!validUser) { 
+        return res.status(403).json({
+          message: 'Unauthorized Access'
         });
       }
 
@@ -321,8 +245,11 @@ export const editProduct = async (req: any, res: any) => {
       // Check if the product with the given ID exists
       const existingProduct = await prisma.product.findUnique({
         where: {
-          product_id: product_id,
+          uuid
         },
+        select: {
+          product_id: true
+        }
       });
 
       if (!existingProduct) {
@@ -377,7 +304,7 @@ export const editProduct = async (req: any, res: any) => {
       // Menghapus gambar-gambar lama terkait produk yang akan diupdate
       if (url.length > 0) {
         const oldImage = await prisma.media.findMany({
-          where: { productId: product_id },
+          where: { productId: existingProduct.product_id },
           select: {
             url: true,
           },
@@ -399,7 +326,7 @@ export const editProduct = async (req: any, res: any) => {
       // Update the product
       const updatedProduct = await prisma.product.update({
         where: {
-          product_id: product_id,
+          uuid,
         },
         data: {
           ...(categoryId && {
@@ -520,7 +447,7 @@ export const productcategories = async (req: any, res: any) => {
       error: error.message,
     });
   }
-}
+};
 
 export const getMedia = async (req: any, res: any) => {
   try {
@@ -562,10 +489,16 @@ export const userprod = async (req: any, res: any) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const productId = parseInt(req.params.id);
+    const {uuid} = req.params
+    const productId = await prisma.product.findUnique({
+      where : {uuid},
+      select :{
+        product_id :true
+      }
+    });
 
     const oldImage = await prisma.media.findMany({
-      where: { productId: productId },
+      where: { productId: productId.product_id },
       select: {
         url: true,
       },
@@ -586,22 +519,22 @@ export const deleteProduct = async (req: Request, res: Response) => {
     // Hapus relasi produk dengan kategori di tabel bridge (ProductCategory)
     await prisma.productcategory.deleteMany({
       where: {
-        productId: productId
+        productId: productId.product_id
       },
     });
 
     await prisma.media.deleteMany({
-      where: { productId: productId }
+      where: { productId: productId.product_id }
     });
 
     await prisma.userproduct.deleteMany({
-      where: { productId: productId },
+      where: { productId: productId.product_id },
     })
 
     // Hapus produk dari tabel produk (Product)
     const deletedProduct = await prisma.product.delete({
       where: {
-        product_id: productId
+        product_id: productId.product_id
       },
     });
 
@@ -620,43 +553,59 @@ export const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
-// export const deleteDetail = async (req: Request, res: Response) => {
-//   try {
-//     const productId = parseInt(req.params.id);
+export const getProductById = async (req: any, res: any) => {
+  try {
+    const {uuid}  = req.params;
+    const products = await prisma.product.findUnique({
+      where: {
+        uuid
+      },
+      include: {
+        ProductCategory: {
+          select: {
+            category: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        Media: {
+          select: {
+            url: true
+          }
+        },
+        UserProduct: {
+          select: {
+            user: {
+              select: {
+                uuid: true,
+                username: true,
+              }
+            }
+          }
+        }
+      }
+    });
 
-//     // Hapus relasi produk dengan kategori di tabel bridge (ProductCategory)
-//     await prisma.productcategory.deleteMany({
-//       where: {
-//         productId: productId,
-//       },
-//     });
-
-//     await prisma.media.delete({
-//       where: { id: productId },
-//     });
-
-//     await prisma.userproduct.deleteMany({
-//       where: { productId: productId },
-//     })
-
-//     // Hapus produk dari tabel produk (Product)
-//     const deletedProduct = await prisma.product.delete({
-//       where: {
-//         product_id: productId
-//       },
-//     });
-
-//     res.json({
-//       status: 200,
-//       message: 'Product deleted successfully',
-//       data: deletedProduct
-//     });
-//   } catch (error) {
-//     console.error('Error deleting product:', error);
-//     res.status(500).json({
-//       status: 500,
-//       message: 'Failed to delete product',
-//       data: null
-//     });
-//   }
-// };
+    if (!products) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Product not found',
+        data: null
+      });
+    }
+    res.json({
+      status: 200,
+      message: 'Product by id fetched successfully ',
+      data: products
+    });
+  } catch (error) {
+    console.error('Error getting product:', error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+      error: error.message
+    });
+  }
+};
