@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from 'bcrypt'
 import { productcategories } from "./product";
+import { parseAccessToken,getUserId } from "./helper";
 
 const prisma = new PrismaClient();
 const fs = require("fs");
@@ -24,12 +25,19 @@ export const getUsers = async (req: any, res: any) => {
 
 export const getUser = async (req: any, res: any) => {
   const { uuid } = req.params
-
+  
   const user = await prisma.users.findFirst({
     where: {
       uuid: uuid
     }
   })
+  if (!user ) {
+    return res.status(404).json({
+      message: 'Not Found'
+    });
+  }
+  
+  
 
   return res.json({
     status: 200,
@@ -77,9 +85,35 @@ export const addSeller = async (req: any, res: any) => {
 }
 
 export const editUser = async (req: any, res: any) => {
-  const { uuid } = req.params
+  const uuid = parseAccessToken(req);
+  if (!uuid) {
+    return res.status(403).json({
+      message: 'Unauthorized Access'
+    });
+  }
+  const validUser = await prisma.users.findUnique({
+    where : { uuid}
+  })   
+  if (!validUser) {
+    return res.status(403).json({
+      message: 'Unauthorized Access'
+    });
+  }
   const { username, password, phone, address } = req.body
 
+  const user = await prisma.users.findFirst({
+    where: {
+      username: username
+    }
+  })
+
+  if (user !== null) {
+    return res.status(400).json({
+      status: 400,
+      message: "User already exists",
+      data: null
+    })
+  }
   const updateData: any = {
     ...(username && { username }),
     ...(password && { password }),
@@ -100,18 +134,22 @@ export const editUser = async (req: any, res: any) => {
 
 }
 
-
 export const deleteUser = async (req: any, res: any) => {
   try {
-    const { userId } = req.params;
-
+    const { uuid } = req.params;
+    const userId = await prisma.users.findUnique({
+      where: {uuid},
+      select : {
+        user_id : true
+      }
+    })
     // Hapus pengguna
 
 
     // Hapus semua relasi yang terkait dengan pengguna
     const productIDS = await prisma.userproduct.findMany({
       where: {
-        userId: userId,
+        userId: userId.user_id,
       },
       select: {
         productId: true,
@@ -139,7 +177,7 @@ export const deleteUser = async (req: any, res: any) => {
         console.log(`File not found: ${url}. Skipping deletion.`);
       }
     });
-
+    //menghapus url image di tabel
     await prisma.media.deleteMany({
       where: {
         productId: {
@@ -159,7 +197,7 @@ export const deleteUser = async (req: any, res: any) => {
 
     await prisma.users.delete({
       where: {
-        user_id: userId,
+        uuid,
       },
     });
 
