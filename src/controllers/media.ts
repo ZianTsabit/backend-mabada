@@ -153,3 +153,19 @@ export const deleteMedia = async (req: any, res: any) => {
         data: deletedMedia
     })
 }
+
+// function to get media from images folder
+export const getMediaFile = async (req: any, res: any) => {
+    const { media_url } = req.query
+    console.log(media_url)
+    if (media_url === null) {
+        return res.status(400).json({
+            status: 400,
+            message: "Media not found",
+            data: null
+        })
+    } else {
+        const file = fs.createReadStream(`${media_url}`)
+        file.pipe(res)
+    }
+}

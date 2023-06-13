@@ -8,7 +8,7 @@ async function main() {
   await seed_product();
   await seed_category();
   await seed_productCategory();
-  await seed_productuser();
+  // await seed_productuser();
   await seed_url();
 }
 
@@ -30,26 +30,26 @@ async function seed_admin() {
 
   admin = await prisma.users.upsert({
     where: {
-      username: 'admin'
+      username: 'Zian'
     },
     update: {},
     create: {
-      username: 'admin',
+      username: 'Zian',
       password: hashedPassword,
       phone: `087886250948`,
       address: `Cakung, Jakarta Timur`,
       role: `admin`
     },
-  }),
-  await prisma.users.create({
-    data : {
-      username : 'qowi',
-      password : hashedPassword,
-      phone : `087886250231`,
-      address : 'Bekasi',
-      role : 'user'
-    }
   })
+//   await prisma.users.create({
+//     data : {
+//       username : 'qowi',
+//       password : hashedPassword,
+//       phone : `087886250231`,
+//       address : 'Bekasi',
+//       role : 'user'
+//     }
+//   })
 
 }
 
@@ -109,13 +109,13 @@ async function seed_url() {
 
 }
 
-async function seed_productuser(){
-  const ids = Array.from({length : 5 }).map((_,index)=>({
-    userId : 1, 
-    productId : faker.datatype.number({min : 1, max :5}),
-  }));
+// async function seed_productuser(){
+//   const ids = Array.from({length : 5 }).map((_,index)=>({
+//     userId : 1, 
+//     productId : faker.datatype.number({min : 1, max :5}),
+//   }));
 
-  await prisma.userproduct.createMany({
-    data : ids,
-  })
-};
+//   await prisma.userproduct.createMany({
+//     data : ids,
+//   })
+// };

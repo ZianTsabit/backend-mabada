@@ -5,6 +5,7 @@ import userRouter from './routes/user';
 import authRouter from './routes/auth';
 import productRouter from './routes/product';
 import categoryRouter from './routes/category';
+import mediaRouter from './routes/media';
 
 config();
 
@@ -24,6 +25,8 @@ app.use((req, res, next) => {
 app.get('/', (req: Request, res: Response, next: NextFunction) => {
     res.send('Express server with TypeScript');
 });
+
+app.use('/media', mediaRouter);
 
 app.use('/users', userRouter);
 
