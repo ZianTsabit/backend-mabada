@@ -40,7 +40,7 @@ export const getProducts = async (req: Request, res: Response) => {
         }
       }
     });
-    
+
     //membuat link url dari helper
     const productsWithMediaUrl = products.map((product) => {
       const mediaUrls = product.Media.map((media) => media.url);
@@ -194,12 +194,12 @@ export const createProduct = async (req: any, res: any) => {
 
       const mediaUrls = product.Media.map((media) => media.url);
       const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
-      
+
       const productWithMediaUrl = {
         ...product,
         Media: mediaLinks,
       };
-  
+
       res.json({
         status: 200,
         message: 'Product by ID fetched successfully',
@@ -280,18 +280,26 @@ export const editProduct = async (req: any, res: any) => {
       }
 
       // Jika categoryId tidak null tetapi kategori tidak ditemukan, tangkap dan beri respons dengan pesan kesalahan
-      if (categoryId) {
-        const existingCategory = await prisma.category.findUnique({
-          where: {
-            category_id: parseInt(categoryId),
+      const categoryIds = categoryId ? Array.isArray(categoryId) ? categoryId.map(id => parseInt(id)) : [parseInt(categoryId)] : [];
+      const existingCategories = await prisma.category.findMany({
+        where: {
+          category_id: {
+            in: categoryIds,
           },
+        },
+        select: {
+          category_id: true,
+        },
+      });
+      const existingCategoryIds = existingCategories.map(category => category.category_id);
+      const missingCategoryIds = categoryIds.filter(id => !existingCategoryIds.includes(id));
+
+      if (missingCategoryIds.length > 0) {
+        return res.status(404).json({
+          status: 404,
+          message: 'Category not found',
+          missingCategoryIds,
         });
-        if (!existingCategory) {
-          return res.status(404).json({
-            status: 404,
-            message: 'Category not found',
-          });
-        }
       }
 
       // Build the data object for updating specific fields
@@ -398,12 +406,12 @@ export const editProduct = async (req: any, res: any) => {
       // Beri respons dengan produk yang telah diperbarui
       const mediaUrls = updatedProduct.Media.map((media) => media.url);
       const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
-      
+
       const productWithMediaUrl = {
         ...updatedProduct,
         Media: mediaLinks,
       };
-  
+
       res.json({
         status: 200,
         message: 'Product by ID fetched successfully',
@@ -622,7 +630,7 @@ export const getProductById = async (req: any, res: any) => {
     }
     const mediaUrls = products.Media.map((media) => media.url);
     const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
-    
+
     const productWithMediaUrl = {
       ...products,
       Media: mediaLinks,
