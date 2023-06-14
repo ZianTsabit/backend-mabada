@@ -1,17 +1,21 @@
 import { Router } from 'express';
-import { getProducts, createProduct, editProduct, categories, productcategories, getProductById, deleteProduct } from '../controllers/product';
+import { getProducts, editProduct, categories, productcategories, deleteProduct, createProduct, userprod, getMedia, getProductByuser, getProductById } from '../controllers/product';
 import { auth } from "../middlewares/auth";
+import { get } from 'http';
+import { getMediaFile } from '../controllers/media';
 
 export const productRouter = Router();
 
 productRouter
     .get('/', getProducts)
-    .get('/get/:id', getProductById)
+    .get('/get/:uuid', getProductById)
     .get('/categories', categories)
+    .get('/user', userprod)
+    .get('/my', getProductByuser)
     .get('/prodcat', productcategories)
-    .post('/add',auth(true), createProduct)
-    .put('/edit/:id', editProduct)
-    .delete('/:id', deleteProduct)
+    .post('/create', createProduct) 
+    .put('/:uuid/edit', editProduct)
+    .delete('/:uuid', deleteProduct)
     ;
     
 

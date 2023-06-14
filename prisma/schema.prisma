@@ -26,6 +26,7 @@ model users {
 
 model product {
   product_id      Int               @id @default(autoincrement())
+   uuid        String        @unique(map: "uuidp") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name            String?
   price           Int?
   quantity        Int?

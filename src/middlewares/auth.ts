@@ -28,7 +28,7 @@ export const auth = (admin: boolean = false, user: boolean = false) => {
                         where: {
                             uuid: decoded.uuid,
                             OR: roles
-                        }
+                        },
                     });
                     if (user) {
                         req.body.token = user;

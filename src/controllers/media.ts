@@ -23,7 +23,6 @@ export const createMedia = async (req: any, res: any) => {
 
     const newMedia = await prisma.media.create({
         data: {
-            name: name,
             productId: product_id,
             url: `fields/${url}`,
             
@@ -76,7 +75,6 @@ export const updateMedia = async (req: any, res: any) => {
             id: media_id
         },
         data: {
-            name: name,
             productId: product_id,
         }
     })
@@ -154,4 +152,20 @@ export const deleteMedia = async (req: any, res: any) => {
         message: "Media deleted successfully",
         data: deletedMedia
     })
+}
+
+// function to get media from images folder
+export const getMediaFile = async (req: any, res: any) => {
+    const { media_url } = req.query
+    console.log(media_url)
+    if (media_url === null) {
+        return res.status(400).json({
+            status: 400,
+            message: "Media not found",
+            data: null
+        })
+    } else {
+        const file = fs.createReadStream(`${media_url}`)
+        file.pipe(res)
+    }
 }

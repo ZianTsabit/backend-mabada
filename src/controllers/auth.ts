@@ -44,7 +44,7 @@ export const login = async (req: any, res: any) => {
         })
     }
 }
-
+//logput di postman
 export const logout = (req: any, res: any) => {
     //token dihapus dari postman environment, atau bisa dihapus di local storage browser
     const token = req.headers.authorization?.split(" ")[1];

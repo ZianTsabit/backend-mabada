@@ -15,6 +15,8 @@ export const createProduct = async (req: any, res: any) => {
         }
     })
 
+    
+
     return res.json({
         status: 200,
         message: "Product created successfully",
@@ -52,9 +54,9 @@ export const updateProduct = async (req: any, res: any) => {
     const { uuid } = req.params
     const { name, price, description, image, quantity} = req.body
 
-    const product = await prisma.product.findFirst({
+    const product = await prisma.users.findFirst({
         where: {
-            product_id: uuid
+            uuid
         }
     })
 
