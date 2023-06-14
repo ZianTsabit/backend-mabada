@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient, media } from '@prisma/client';
 import multer from 'multer';
 import faker from 'faker';
-import { getUserId } from './helper';
+import { generateMediaUrl, getUserId } from './helper';
 
 const prisma = new PrismaClient();
 const upload = multer({ dest: 'images/' });
@@ -30,6 +30,7 @@ export const getProducts = async (req: Request, res: Response) => {
         },
         UserProduct: {
           select: {
+            productId: true,
             user: {
               select: {
                 username: true
@@ -39,11 +40,22 @@ export const getProducts = async (req: Request, res: Response) => {
         }
       }
     });
+    
+    //membuat link url dari helper
+    const productsWithMediaUrl = products.map((product) => {
+      const mediaUrls = product.Media.map((media) => media.url);
+      const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
+
+      return {
+        ...product,
+        Media: mediaLinks,
+      };
+    });
 
     res.json({
       status: 200,
       message: 'Products fetched successfully',
-      data: products
+      data: productsWithMediaUrl,
     });
   } catch (error) {
     console.error('Error getting products:', error);
@@ -58,31 +70,31 @@ export const getProducts = async (req: Request, res: Response) => {
 export const getProductByuser = async (req: any, res: any) => {
   try {
     const uuid = parseAccessToken(req);
-      const userId = await getUserId(uuid)
-      if (!userId) {
-        return res.status(403).json({
-          message: 'Unauthorized Access'
-        });
-      }
-  const product = await prisma.userproduct.findMany({
-    where : { userId},
-    select : {
-      product : {
-        select : {
-          uuid : true,
-          name : true,
-          price : true,
-          desc : true,
-          quantity : true,
+    const userId = await getUserId(uuid)
+    if (!userId) {
+      return res.status(403).json({
+        message: 'Unauthorized Access'
+      });
+    }
+    const product = await prisma.userproduct.findMany({
+      where: { userId },
+      select: {
+        product: {
+          select: {
+            uuid: true,
+            name: true,
+            price: true,
+            desc: true,
+            quantity: true,
+          }
         }
       }
-    }
-  })
-  res.json({
-    status: 200,
-    message: 'User Products fetched successfully',
-    data: product
-  });
+    })
+    res.json({
+      status: 200,
+      message: 'User Products fetched successfully',
+      data: product
+    });
   } catch (error) {
     res.status(500).json({
       status: 500,
@@ -113,7 +125,7 @@ export const createProduct = async (req: any, res: any) => {
           message: 'Unauthorized Access'
         });
       }
-      
+
       const url = req.files.map((file: any) => {
         if (file) {
           const fileExtension = path.extname(file.originalname);
@@ -180,12 +192,18 @@ export const createProduct = async (req: any, res: any) => {
         }
       });
 
+      const mediaUrls = product.Media.map((media) => media.url);
+      const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
+      
+      const productWithMediaUrl = {
+        ...product,
+        Media: mediaLinks,
+      };
+  
       res.json({
-        status: 201,
-        message: 'Product created successfully',
-        data: {
-          ...product,
-        },
+        status: 200,
+        message: 'Product by ID fetched successfully',
+        data: productWithMediaUrl
       });
     });
   } catch (error) {
@@ -197,7 +215,6 @@ export const createProduct = async (req: any, res: any) => {
     });
   }
 };
-
 
 export const editProduct = async (req: any, res: any) => {
   try {
@@ -223,18 +240,20 @@ export const editProduct = async (req: any, res: any) => {
         });
       }
       const productId = await prisma.product.findUnique({
-        where : { uuid },
-        select : {
-          product_id : true
+        where: { uuid },
+        select: {
+          product_id: true
         }
       })
-      
+      // make sure the product and userId are related in the userproduct
       const validUser = await prisma.userproduct.findFirst({
-        where : {userId : userId,
-          productId : productId.product_id}
+        where: {
+          userId: userId,
+          productId: productId.product_id
+        }
       })
 
-      if (!validUser) { 
+      if (!validUser) {
         return res.status(403).json({
           message: 'Unauthorized Access'
         });
@@ -301,8 +320,8 @@ export const editProduct = async (req: any, res: any) => {
         }
         return null;
       });
-      // Menghapus gambar-gambar lama terkait produk yang akan diupdate
-      if (url.length > 0) {
+      // Menghapus gambar-gambar lama terkait produk yang akan diupdate, atau menghapus semua file yang ada di productId jika url kosong, jika file tidak ada tidak error
+      if (url) {
         const oldImage = await prisma.media.findMany({
           where: { productId: existingProduct.product_id },
           select: {
@@ -337,7 +356,7 @@ export const editProduct = async (req: any, res: any) => {
               },
             },
           }),
-          ...(url.length > 0 && {
+          ...(url && {
             Media: {
               deleteMany: {},
               createMany: {
@@ -377,12 +396,18 @@ export const editProduct = async (req: any, res: any) => {
       });
 
       // Beri respons dengan produk yang telah diperbarui
+      const mediaUrls = updatedProduct.Media.map((media) => media.url);
+      const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
+      
+      const productWithMediaUrl = {
+        ...updatedProduct,
+        Media: mediaLinks,
+      };
+  
       res.json({
         status: 200,
-        message: 'Product updated successfully',
-        data: {
-          ...updatedProduct,
-        },
+        message: 'Product by ID fetched successfully',
+        data: productWithMediaUrl
       });
     });
   } catch (error) {
@@ -489,11 +514,11 @@ export const userprod = async (req: any, res: any) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const {uuid} = req.params
+    const { uuid } = req.params
     const productId = await prisma.product.findUnique({
-      where : {uuid},
-      select :{
-        product_id :true
+      where: { uuid },
+      select: {
+        product_id: true
       }
     });
 
@@ -555,7 +580,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
 export const getProductById = async (req: any, res: any) => {
   try {
-    const {uuid}  = req.params;
+    const { uuid } = req.params;
     const products = await prisma.product.findUnique({
       where: {
         uuid
@@ -595,10 +620,18 @@ export const getProductById = async (req: any, res: any) => {
         data: null
       });
     }
+    const mediaUrls = products.Media.map((media) => media.url);
+    const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
+    
+    const productWithMediaUrl = {
+      ...products,
+      Media: mediaLinks,
+    };
+
     res.json({
       status: 200,
-      message: 'Product by id fetched successfully ',
-      data: products
+      message: 'Product by ID fetched successfully',
+      data: productWithMediaUrl
     });
   } catch (error) {
     console.error('Error getting product:', error);

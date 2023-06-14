@@ -4,6 +4,11 @@ import jwt from 'jsonwebtoken'
 
 const prisma = new PrismaClient()
 
+/**
+ * Parse the access token from the request headers.
+ * @param req The Express request object.
+ * @returns The UUID parsed from the access token, or null if the token is invalid or not present.
+ */
 export const parseAccessToken = (req: Request): string | null => {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -22,6 +27,11 @@ export const parseAccessToken = (req: Request): string | null => {
   return null;
 };
 
+/**
+ * Get the user ID based on the UUID.
+ * @param uuid The UUID of the user.
+ * @returns The user ID if found, or null if the user is not found or an error occurs.
+ */
 export const getUserId = async (uuid: string): Promise<number | null> => {
   try {
     const user = await prisma.users.findFirst({
@@ -43,4 +53,15 @@ export const getUserId = async (uuid: string): Promise<number | null> => {
   return null;
 };
 
-module.exports = { parseAccessToken,getUserId};
+/**
+ * Generate the media URL based on the request and media URL.
+ * @param req The Express request object.
+ * @param mediaUrl The media URL.
+ * @returns The generated media URL.
+ */
+export function generateMediaUrl(req: Request, mediaUrl: string) {
+  const encodedUrl = encodeURIComponent(mediaUrl);
+  return `${req.protocol}://${req.get('host')}/media?media_url=${encodedUrl}`;
+}
+
+module.exports = { parseAccessToken, getUserId, generateMediaUrl };
