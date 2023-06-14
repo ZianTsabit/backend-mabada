@@ -126,6 +126,28 @@ export const createProduct = async (req: any, res: any) => {
         });
       }
 
+      const categoryIds = categoryId ? Array.isArray(categoryId) ? categoryId.map(id => parseInt(id)) : [parseInt(categoryId)] : [];
+      const existingCategories = await prisma.category.findMany({
+        where: {
+          category_id: {
+            in: categoryIds,
+          },
+        },
+        select: {
+          category_id: true,
+        },
+      });
+      const existingCategoryIds = existingCategories.map(category => category.category_id);
+      const missingCategoryIds = categoryIds.filter(id => !existingCategoryIds.includes(id));
+
+      if (missingCategoryIds.length > 0) {
+        return res.status(404).json({
+          status: 404,
+          message: 'Category not found',
+          missingCategoryIds,
+        });
+      }
+
       const url = req.files.map((file: any) => {
         if (file) {
           const fileExtension = path.extname(file.originalname);
