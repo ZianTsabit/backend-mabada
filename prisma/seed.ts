@@ -69,7 +69,7 @@ async function seed_product() {
     const categories = await prisma.category.findMany();
     const categoryIds = categories.map((category) => category.category_id);
 
-    const products = Array.from({ length: 5 }).map(() => ({
+    const products = Array.from({ length: 50 }).map(() => ({
       name: faker.commerce.productName(),
       price: faker.datatype.number({ min: 1000, max: 100000 }),
       quantity: faker.datatype.number({ min: 1, max: 200 }),
@@ -95,7 +95,7 @@ async function seed_product() {
 
     const createdProductCategories = await prisma.productcategory.createMany({
       data: productCategoryData,
-      skipDuplicates: true,
+      skipDuplicates: false,
     });
 
     console.log(`Created product categories: ${createdProductCategories.count}`);
@@ -122,9 +122,9 @@ async function seed_product() {
 // };
 
 async function seed_url() {
-  const ids = Array.from({length : 5 }).map((_,index)=>({
+  const ids = Array.from({length : 50 }).map((_,index)=>({
     productId : index + 1,
-    url : "e553328a-71ba-493a-9234-9e0926e22476.png",
+    url : "images/e553328a-71ba-493a-9234-9e0926e22476.png",
   }));
 
   const urls = await prisma.media.createMany({
@@ -136,9 +136,9 @@ async function seed_url() {
 }
 
 async function seed_productuser(){
-  const ids = Array.from({length : 5 }).map((_,index)=>({
+  const ids = Array.from({length : 50 }).map((_,index)=>({
     userId : 1, 
-    productId : faker.datatype.number({min : 1, max :5}),
+    productId : faker.datatype.number({min : 1, max :50}),
   }));
 
   await prisma.userproduct.createMany({
