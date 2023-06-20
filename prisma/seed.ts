@@ -5,10 +5,10 @@ const prisma = new PrismaClient()
 
 async function main() {
   await seed_admin();
-  await seed_product();
   await seed_category();
-  await seed_productCategory();
-  // await seed_productuser();
+  await seed_product();
+  // await seed_productCategory();
+  await seed_productuser();
   await seed_url();
 }
 
@@ -53,21 +53,6 @@ async function seed_admin() {
 
 }
 
-async function seed_product() {
-  const products = Array.from({ length: 5 }).map(() => ({
-    name: faker.commerce.productName(),
-    price: faker.datatype.number({ min: 1000, max: 100000 }),
-    quantity: faker.datatype.number({ min: 1, max: 200 }),
-    desc: faker.lorem.sentence(),
-  }));
-
- await prisma.product.createMany({
-    data: products,
-    skipDuplicates: true,
-  });
-  
-}
-
 async function seed_category() {
   const categories = ['Electronics', 'Clothing', 'Books', 'Home Decor'];
 
@@ -79,26 +64,67 @@ async function seed_category() {
   console.log(`Seeded ${createdCategories.count} categories.`);
 }
 
-async function seed_productCategory() {
+async function seed_product() {
+  try {
+    const categories = await prisma.category.findMany();
+    const categoryIds = categories.map((category) => category.category_id);
+
+    const products = Array.from({ length: 5 }).map(() => ({
+      name: faker.commerce.productName(),
+      price: faker.datatype.number({ min: 1000, max: 100000 }),
+      quantity: faker.datatype.number({ min: 1, max: 200 }),
+      desc: faker.lorem.sentence(),
+    }));
+
+    const createdProducts = await prisma.product.createMany({
+      data: products.map((product) => ({
+        ...product,
+      })),
+    });
+
+    console.log(`Created products: ${createdProducts.count}`);
+
+    // Generate random product-category associations
+    const productIds = createdProducts.count;
+
+    // Generate random product-category associations
+    const productCategoryData = Array.from({ length: productIds}).map((productId) => ({
+      productId : faker.datatype.number({min : 1, max: productIds}),
+      categoryId: faker.random.arrayElement(categoryIds),
+    }));
+
+    const createdProductCategories = await prisma.productcategory.createMany({
+      data: productCategoryData,
+      skipDuplicates: true,
+    });
+
+    console.log(`Created product categories: ${createdProductCategories.count}`);
+  } catch (error) {
+    console.error('Error creating seed data:', error);
+  }
+}
+
+
+// async function seed_productCategory() {
   
-  const ids = Array.from({length : 5 }).map((_,index)=>({
-    productId : index + 1,
-    categoryId : faker.datatype.number({min : 1, max :4}),
-  }));
+//   const ids = Array.from({length : 5 }).map((_,index)=>({
+//     productId : index + 1,
+//     categoryId : faker.datatype.number({min : 1, max :4}),
+//   }));
 
-  const created = await prisma.productcategory.createMany({
-    data : ids,
-    skipDuplicates : true,
-  });
-  console.log(`Seeded ${created.count} product categories.`);
+//   const created = await prisma.productcategory.createMany({
+//     data : ids,
+//     skipDuplicates : true,
+//   });
+//   console.log(`Seeded ${created.count} product categories.`);
 
 
-};
+// };
 
 async function seed_url() {
   const ids = Array.from({length : 5 }).map((_,index)=>({
     productId : index + 1,
-    url : faker.random.alpha(),
+    url : "e553328a-71ba-493a-9234-9e0926e22476.png",
   }));
 
   const urls = await prisma.media.createMany({
@@ -109,13 +135,13 @@ async function seed_url() {
 
 }
 
-// async function seed_productuser(){
-//   const ids = Array.from({length : 5 }).map((_,index)=>({
-//     userId : 1, 
-//     productId : faker.datatype.number({min : 1, max :5}),
-//   }));
+async function seed_productuser(){
+  const ids = Array.from({length : 5 }).map((_,index)=>({
+    userId : 1, 
+    productId : faker.datatype.number({min : 1, max :5}),
+  }));
 
-//   await prisma.userproduct.createMany({
-//     data : ids,
-//   })
-// };
+  await prisma.userproduct.createMany({
+    data : ids,
+  })
+};
