@@ -12,6 +12,11 @@ const { parseAccessToken } = require('./helper');
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
+    const { page, limit } = req.query;
+  
+    // Menghitung offset berdasarkan halaman dan batasan item per halaman
+    const offset = (parseInt(page.toString()) - 1) * parseInt(limit.toString());
+
     const products = await prisma.product.findMany({
       include: {
         ProductCategory: {
@@ -38,7 +43,9 @@ export const getProducts = async (req: Request, res: Response) => {
             }
           }
         }
-      }
+      },
+      skip: offset,
+      take: parseInt(limit.toString())
     });
 
     //membuat link url dari helper
