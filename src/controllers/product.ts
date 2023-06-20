@@ -1,14 +1,13 @@
 import { Request, Response } from 'express';
-import { PrismaClient, media,Prisma } from '@prisma/client';
+import { PrismaClient, media, Prisma } from '@prisma/client';
 import multer from 'multer';
 import faker from 'faker';
-import { generateMediaUrl, getUserId } from './helper';
+import { generateMediaUrl, getUserId, parseAccessToken } from './helper';
 
 const prisma = new PrismaClient();
 const upload = multer({ dest: 'images/' });
 const path = require('path');
 const fs = require('fs');
-const { parseAccessToken } = require('./helper');
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -110,7 +109,6 @@ export const getProducts = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const getProductByuser = async (req: any, res: any) => {
   try {
@@ -298,7 +296,18 @@ export const editProduct = async (req: any, res: any) => {
       }
 
       const { uuid } = req.params;
-
+      const productId = await prisma.product.findUnique({
+        where: { uuid },
+        select: {
+          product_id: true
+        }
+      })
+      //validasi uuid
+      if (!productId) {
+        return res.status(403).json({
+          message: "Product not found"
+        })
+      }
       const UserUuid = parseAccessToken(req);
       const userId = await getUserId(UserUuid)
       if (!userId) {
@@ -306,12 +315,6 @@ export const editProduct = async (req: any, res: any) => {
           message: 'Unauthorized Access'
         });
       }
-      const productId = await prisma.product.findUnique({
-        where: { uuid },
-        select: {
-          product_id: true
-        }
-      })
       // make sure the product and userId are related in the userproduct
       const validUser = await prisma.userproduct.findFirst({
         where: {
