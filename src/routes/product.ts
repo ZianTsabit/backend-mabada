@@ -15,7 +15,7 @@ productRouter
     .get('/prodcat', productcategories)
     .post('/create', createProduct) 
     .put('/:uuid/edit', editProduct)
-    .delete('/:uuid', deleteProduct)
+    .delete('/:uuid', auth(true), deleteProduct)
     ;
     
 
