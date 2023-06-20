@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient, media } from '@prisma/client';
+import { PrismaClient, media,Prisma } from '@prisma/client';
 import multer from 'multer';
 import faker from 'faker';
 import { generateMediaUrl, getUserId } from './helper';
@@ -12,43 +12,80 @@ const { parseAccessToken } = require('./helper');
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const { page, limit } = req.query;
-  
+    const { page, limit, name, username, keyword } = req.query;
+
     // Menghitung offset berdasarkan halaman dan batasan item per halaman
     const offset = (parseInt(page.toString()) - 1) * parseInt(limit.toString());
+    const take = parseInt(limit.toString());
+
+    const filter: Prisma.productWhereInput = {};
+
+    if (name) {
+      filter.ProductCategory = {
+        some: {
+          category: {
+            name: {
+              contains: name.toString(),
+              mode: 'insensitive', // Membuat pencarian tidak case sensitive
+            },
+          },
+        },
+      };
+    }
+
+    if (username) {
+      filter.UserProduct = {
+        some: {
+          user: {
+            username: {
+              contains: username.toString(),
+              mode: 'insensitive', // Membuat pencarian tidak case sensitive
+            },
+          },
+        },
+      };
+    }
+
+    if (keyword) {
+      filter.name = {
+        contains: keyword.toString(),
+        mode: 'insensitive', // Membuat pencarian tidak case sensitive
+      };
+    }
 
     const products = await prisma.product.findMany({
+      where: filter,
       include: {
         ProductCategory: {
           select: {
             category: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         Media: {
           select: {
-            url: true
-          }
+            url: true,
+          },
         },
         UserProduct: {
           select: {
             productId: true,
             user: {
               select: {
-                username: true
-              }
-            }
-          }
-        }
+                username: true,
+              },
+            },
+          },
+        },
       },
       skip: offset,
-      take: parseInt(limit.toString())
+      take,
     });
 
-    //membuat link url dari helper
+    // Membuat link URL dari helper
     const productsWithMediaUrl = products.map((product) => {
       const mediaUrls = product.Media.map((media) => media.url);
       const mediaLinks = mediaUrls.map((url) => generateMediaUrl(req, url));
@@ -69,10 +106,11 @@ export const getProducts = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 500,
       message: 'Failed to fetch products',
-      data: null
+      data: null,
     });
   }
 };
+
 
 export const getProductByuser = async (req: any, res: any) => {
   try {
