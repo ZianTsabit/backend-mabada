@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient, media, Prisma } from '@prisma/client';
 import multer from 'multer';
 import faker from 'faker';
-import { generateMediaUrl, getUserId, parseAccessToken } from './helper';
+import { generateMediaUrl, getUserId } from './helper';
 
 const prisma = new PrismaClient();
 const upload = multer({ dest: 'images/' });
@@ -590,7 +590,7 @@ export const deleteProduct = async (req: any, res: any) => {
     const UserUuid  = req.token?.uuid;
     const userId = await getUserId(UserUuid)
 
-    
+
     const productId = await prisma.product.findUnique({
       where: { uuid },
       select: {
