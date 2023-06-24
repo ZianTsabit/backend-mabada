@@ -112,13 +112,9 @@ export const getProducts = async (req: Request, res: Response) => {
 
 export const getProductByuser = async (req: any, res: any) => {
   try {
-    const uuid = parseAccessToken(req);
+    const {uuid} = req.token;
     const userId = await getUserId(uuid)
-    if (!userId) {
-      return res.status(403).json({
-        message: 'Unauthorized Access'
-      });
-    }
+
     const product = await prisma.userproduct.findMany({
       where: { userId },
       select: {
@@ -129,6 +125,11 @@ export const getProductByuser = async (req: any, res: any) => {
             price: true,
             desc: true,
             quantity: true,
+          }
+        },
+        user : {
+          select : {
+            username : true
           }
         }
       }
@@ -158,17 +159,12 @@ export const createProduct = async (req: any, res: any) => {
           data: err.message,
         });
       }
-
-      const { name, price, quantity, desc, categoryId } = req.body;
-
-      const uuid = parseAccessToken(req);
+      
+      //mendapat uuid dari auth
+      const {uuid} = req.token; 
       const userId = await getUserId(uuid)
-      if (!userId) {
-        return res.status(403).json({
-          message: 'Unauthorized Access'
-        });
-      }
-
+      const { name, price, quantity, desc, categoryId } = req.body;
+      
       const categoryIds = categoryId ? Array.isArray(categoryId) ? categoryId.map(id => parseInt(id)) : [parseInt(categoryId)] : [];
       const existingCategories = await prisma.category.findMany({
         where: {
@@ -294,6 +290,9 @@ export const editProduct = async (req: any, res: any) => {
           error: err.message,
         });
       }
+      //memakai useruid, membedakan dengan uuid product 
+      const UserUuid  = req.token?.uuid;
+      const userId = await getUserId(UserUuid)
 
       const { uuid } = req.params;
       const productId = await prisma.product.findUnique({
@@ -308,13 +307,8 @@ export const editProduct = async (req: any, res: any) => {
           message: "Product not found"
         })
       }
-      const UserUuid = parseAccessToken(req);
-      const userId = await getUserId(UserUuid)
-      if (!userId) {
-        return res.status(403).json({
-          message: 'Unauthorized Access'
-        });
-      }
+     
+    
       // make sure the product and userId are related in the userproduct
       const validUser = await prisma.userproduct.findFirst({
         where: {
@@ -590,9 +584,13 @@ export const userprod = async (req: any, res: any) => {
   }
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = async (req: any, res: any) => {
   try {
     const { uuid } = req.params
+    const UserUuid  = req.token?.uuid;
+    const userId = await getUserId(UserUuid)
+
+    
     const productId = await prisma.product.findUnique({
       where: { uuid },
       select: {

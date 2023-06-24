@@ -34,7 +34,7 @@ export const parseAccessToken = (req: Request): string | null => {
  */
 export const getUserId = async (uuid: string): Promise<number | null> => {
   try {
-    const user = await prisma.users.findFirst({
+    const user = await prisma.users.findUnique({
       where: {
         uuid: uuid,
       },

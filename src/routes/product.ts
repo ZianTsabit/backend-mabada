@@ -11,11 +11,11 @@ productRouter
     .get('/get/:uuid', getProductById)
     .get('/categories', categories)
     .get('/user', userprod)
-    .get('/my', getProductByuser)
+    .get('/my',auth(true,true), getProductByuser)
     .get('/prodcat', productcategories)
-    .post('/create', createProduct) 
-    .put('/:uuid/edit', editProduct)
-    .delete('/:uuid', auth(true), deleteProduct)
+    .post('/create', auth(true,true),createProduct) 
+    .put('/:uuid/edit',auth(true,true), editProduct)
+    .delete('/:uuid', auth(true,true), deleteProduct)
     ;
     
 
