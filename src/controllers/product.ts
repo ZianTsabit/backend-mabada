@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient, media, Prisma } from '@prisma/client';
+import { PrismaClient, media, Prisma, role } from '@prisma/client';
 import multer from 'multer';
 import faker from 'faker';
 import { generateMediaUrl, getUserId } from './helper';
@@ -110,6 +110,7 @@ export const getProducts = async (req: Request, res: Response) => {
   }
 };
 
+//melihat product user sendiri
 export const getProductByuser = async (req: any, res: any) => {
   try {
     const {uuid} = req.token;
@@ -162,6 +163,7 @@ export const createProduct = async (req: any, res: any) => {
       
       //mendapat uuid dari auth
       const {uuid} = req.token; 
+      //mendapat user_id dari uuid
       const userId = await getUserId(uuid)
       const { name, price, quantity, desc, categoryId } = req.body;
       
@@ -293,6 +295,7 @@ export const editProduct = async (req: any, res: any) => {
       //memakai useruid, membedakan dengan uuid product 
       const UserUuid  = req.token?.uuid;
       const userId = await getUserId(UserUuid)
+      const {role} = req.token
 
       const { uuid } = req.params;
       const productId = await prisma.product.findUnique({
@@ -316,8 +319,10 @@ export const editProduct = async (req: any, res: any) => {
           productId: productId.product_id
         }
       })
+      console.log(role,validUser)
 
-      if (!validUser) {
+
+      if (!validUser && role !== 'admin') {
         return res.status(403).json({
           message: 'Unauthorized Access'
         });
@@ -493,6 +498,7 @@ export const editProduct = async (req: any, res: any) => {
   }
 };
 
+//nanti di pisah dan buat route sendiri //
 export const categories = async (req: any, res: any) => {
   try {
     const categories = await prisma.category.findMany();
@@ -584,19 +590,43 @@ export const userprod = async (req: any, res: any) => {
   }
 };
 
+////////////////////////////////////////////////////////////////
+
 export const deleteProduct = async (req: any, res: any) => {
   try {
     const { uuid } = req.params
     const UserUuid  = req.token?.uuid;
-    const userId = await getUserId(UserUuid)
-
+    const {role} = req.token
 
     const productId = await prisma.product.findUnique({
       where: { uuid },
       select: {
         product_id: true
       }
-    });
+    })
+    //validasi uuid
+    if (!productId) {
+      return res.status(403).json({
+        message: "Product not found"
+      })
+    }
+
+    const userId = await getUserId(UserUuid)
+    //validasi admin
+    const validUser = await prisma.userproduct.findFirst({
+      where: {
+        userId: userId,
+        productId: productId.product_id
+      }
+    })
+    console.log(role,validUser)
+
+
+    if (!validUser && role !== 'admin') {
+      return res.status(403).json({
+        message: 'Unauthorized Access'
+      });
+    }
 
     const oldImage = await prisma.media.findMany({
       where: { productId: productId.product_id },
